@@ -33,18 +33,24 @@ class Countdown:
     Build an iterator class that starts at `n` and yields down to `0` inclusive.
 
     Example:
-    >>> list(Countdown(3))
+    # >>> list(Countdown(3))
     [3, 2, 1, 0]
     """
 
     def __init__(self, n: int) -> None:
-        raise NotImplementedError
+        self.value = n
+        self.limit = 0
 
     def __iter__(self) -> Iterator[int]:
-        raise NotImplementedError
+        return self
 
     def __next__(self) -> int:
-        raise NotImplementedError
+        if self.value < 0:
+            raise StopIteration
+        current = self.value
+        self.value -= 1
+        return current
+
 
 
 class StepIterator:
@@ -55,20 +61,28 @@ class StepIterator:
     Raise `ValueError` when `step <= 0`.
 
     Example:
-    >>> list(StepIterator([10, 20, 30, 40, 50, 60]))
+    # >>> list(StepIterator([10, 20, 30, 40, 50, 60]))
     [10, 30, 50]
-    >>> list(StepIterator([1, 2, 3, 4, 5, 6, 7], step=3))
+    # >>> list(StepIterator([1, 2, 3, 4, 5, 6, 7], step=3))
     [1, 4, 7]
     """
 
     def __init__(self, values: list[Any], step: int = 2) -> None:
-        raise NotImplementedError
+        self.values = values
+        self.step = step
+        self.index = 0
 
     def __iter__(self) -> Iterator[Any]:
-        raise NotImplementedError
+        return self
 
     def __next__(self) -> Any:
-        raise NotImplementedError
+        if self.step <= 0:
+            raise ValueError('Step must be greater than 0.')
+        if self.index >= len(self.values):
+            raise StopIteration
+        value = self.values[self.index]
+        self.index += self.step
+        return value
 
 
 class UniqueConsecutiveIterator:
@@ -77,18 +91,26 @@ class UniqueConsecutiveIterator:
     Yield values while removing only *consecutive* duplicates.
 
     Example:
-    >>> list(UniqueConsecutiveIterator([1, 1, 2, 2, 2, 3, 1, 1]))
+    # >>> list(UniqueConsecutiveIterator([1, 1, 2, 2, 2, 3, 1, 1]))
     [1, 2, 3, 1]
     """
 
     def __init__(self, values: list[Any]) -> None:
-        raise NotImplementedError
+        self.values = values
+        self.index = 0
 
     def __iter__(self) -> Iterator[Any]:
-        raise NotImplementedError
+        return self
 
     def __next__(self) -> Any:
-        raise NotImplementedError
+        if self.index >= len(self.values):
+            raise StopIteration
+        value = self.values[self.index]
+        self.index += 1
+        while self.index < len(self.values) and self.values[self.index] == value:
+            self.index += 1
+        return value
+
 
 
 class CircularIterator:
@@ -98,18 +120,25 @@ class CircularIterator:
     Raise `ValueError` when sequence is empty or when `k < 0`.
 
     Example:
-    >>> list(CircularIterator(["A", "B", "C"], 8))
+    # >>> list(CircularIterator(["A", "B", "C"], 8))
     ['A', 'B', 'C', 'A', 'B', 'C', 'A', 'B']
     """
 
     def __init__(self, sequence: Sequence[Any], k: int) -> None:
-        raise NotImplementedError
+        self.sequence = sequence
+        self.k = k
+        self.index = 0
 
     def __iter__(self) -> Iterator[Any]:
-        raise NotImplementedError
+        return self
 
     def __next__(self) -> Any:
-        raise NotImplementedError
+        if self.k == 0:
+            raise StopIteration
+        value = self.sequence[self.index]
+        self.index = (self.index + 1) % len(self.sequence)
+        self.k -= 1
+        return value
 
 
 class FlattenIterator:
@@ -119,18 +148,24 @@ class FlattenIterator:
     of arbitrary depth.
 
     Example:
-    >>> list(FlattenIterator([1, [2, 3], [4, [5, 6]], 7]))
+    # >>> list(FlattenIterator([1, [2, 3], [4, [5, 6]], 7]))
     [1, 2, 3, 4, 5, 6, 7]
     """
 
     def __init__(self, data: list[Any]) -> None:
-        raise NotImplementedError
+        self.stack = list(reversed(data))
 
     def __iter__(self) -> Iterator[Any]:
-        raise NotImplementedError
+        return self
 
     def __next__(self) -> Any:
-        raise NotImplementedError
+        while self.stack:
+            item = self.stack.pop()
+            if isinstance(item, list):
+                self.stack.extend(reversed(item))
+            else:
+                return item
+        raise StopIteration
 
 
 def read_words(filename: str) -> Iterator[str]:
@@ -140,13 +175,28 @@ def read_words(filename: str) -> Iterator[str]:
     file into memory.
 
     Example:
-    >>> list(read_words("sample.txt"))
+    # >>> list(read_words("sample.txt"))
     ['one', 'two', 'three']
     """
-    raise NotImplementedError
+    with open(filename) as f:
+        for line in f:
+            for word in line.split():
+                yield word
 
 
 def batch(iterable: Iterable[Any], size: int) -> Iterator[list[Any]]:
+    if size <= 0:
+        raise ValueError
+
+    current = []
+    for item in iterable:
+        current.append(item)
+        if len(current) == size:
+            yield current
+            current = []
+
+    if current:
+        yield current
     """Problem 7. Batch generator.
 
     Yield lists containing at most `size` items from `iterable`.
@@ -156,10 +206,14 @@ def batch(iterable: Iterable[Any], size: int) -> Iterator[list[Any]]:
     >>> list(batch([1, 2, 3, 4, 5, 6, 7], 3))
     [[1, 2, 3], [4, 5, 6], [7]]
     """
-    raise NotImplementedError
 
 
 def flatten(data: list[Any]) -> Iterator[Any]:
+    for item in data:
+        if isinstance(item, list):
+            yield from flatten(item)
+        else:
+            yield item
     """Problem 8 (optional). Recursive flatten generator.
 
     Recursively yield all scalar values from a nested list.
@@ -168,7 +222,6 @@ def flatten(data: list[Any]) -> Iterator[Any]:
     >>> list(flatten([1, [2, 3], [4, [5, 6]], 7]))
     [1, 2, 3, 4, 5, 6, 7]
     """
-    raise NotImplementedError
 
 
 def log_calls(func: Callable[..., Any]) -> Callable[..., Any]:
