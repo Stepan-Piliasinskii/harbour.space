@@ -1,0 +1,16 @@
+https://github.com/Stepan-Piliasinskii/movies-api.git
+
+movies-api-production-9a50.up.railway.app
+
+I used a railway app.
+
+
+curl -X POST https://movies-api-production-9a50.up.railway.app/movies \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"title":"Inception","director":"Christopher Nolan","year":2010}'
+
+
+
+
+curl -L $URL/movies
