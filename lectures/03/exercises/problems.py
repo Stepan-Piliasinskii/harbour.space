@@ -23,6 +23,9 @@ Problems:
 
 from __future__ import annotations
 
+import functools
+import time
+from collections import OrderedDict
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import Any
 
@@ -68,6 +71,8 @@ class StepIterator:
     """
 
     def __init__(self, values: list[Any], step: int = 2) -> None:
+        if step <= 0:
+            raise ValueError("Step must be greater than 0.")
         self.values = values
         self.step = step
         self.index = 0
@@ -76,8 +81,6 @@ class StepIterator:
         return self
 
     def __next__(self) -> Any:
-        if self.step <= 0:
-            raise ValueError('Step must be greater than 0.')
         if self.index >= len(self.values):
             raise StopIteration
         value = self.values[self.index]
@@ -125,6 +128,10 @@ class CircularIterator:
     """
 
     def __init__(self, sequence: Sequence[Any], k: int) -> None:
+        if k < 0:
+            raise ValueError("k must be non-negative.")
+        if not sequence:
+            raise ValueError("sequence cannot be empty.")
         self.sequence = sequence
         self.k = k
         self.index = 0
@@ -243,7 +250,16 @@ def log_calls(func: Callable[..., Any]) -> Callable[..., Any]:
     add(2, 3) -> 5
     5
     """
-    raise NotImplementedError
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        args_repr = [repr(a) for a in args]
+        kwargs_repr = [f"{k}={repr(v)}" for k, v in kwargs.items()]
+        signature = ", ".join(args_repr + kwargs_repr)
+        result = func(*args, **kwargs)
+        print(f"{func.__name__}({signature}) -> {repr(result)}")
+        return result
+
+    return wrapper
 
 
 def measure_time(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -259,7 +275,16 @@ def measure_time(func: Callable[..., Any]) -> Callable[..., Any]:
     >>> work()
     done
     """
-    raise NotImplementedError
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        end = time.perf_counter()
+        elapsed = (end - start) * 1000
+        print(f"Executed in {elapsed} ms")
+        return result
+
+    return wrapper
 
 
 def count_calls(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -277,7 +302,13 @@ def count_calls(func: Callable[..., Any]) -> Callable[..., Any]:
     >>> ping.calls
     2
     """
-    raise NotImplementedError
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        wrapper.calls += 1
+        return func(*args, **kwargs)
+
+    wrapper.calls = 0
+    return wrapper
 
 
 def ensure_non_negative(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -292,7 +323,14 @@ def ensure_non_negative(func: Callable[..., Any]) -> Callable[..., Any]:
     >>> diff(5, 2)
     3
     """
-    raise NotImplementedError
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        result = func(*args, **kwargs)
+        if result < 0:
+            raise ValueError("Return value must be non-negative")
+        return result
+
+    return wrapper
 
 
 def retry(times: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
@@ -306,7 +344,44 @@ def retry(times: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     ... def flaky():
     ...     ...
     """
-    raise NotImplementedError
+    if times < 0:
+        raise ValueError("times must be non-negative")
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            last_exc = Exception("Retry failed")
+            for _ in range(times + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    last_exc = e
+            raise last_exc
+
+        return wrapper
+
+    return decorator
+
+
+class LRUCache:
+    def __init__(self, func: Callable[..., Any], maxsize: int) -> None:
+        self.func = func
+        self.maxsize = maxsize
+        self.cache: OrderedDict[Any, Any] = OrderedDict()
+        functools.update_wrapper(self, func)
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        key = (args, tuple(sorted(kwargs.items())))
+        if key in self.cache:
+            self.cache.move_to_end(key)
+            return self.cache[key]
+
+        result = self.func(*args, **kwargs)
+        if self.maxsize > 0:
+            self.cache[key] = result
+            if len(self.cache) > self.maxsize:
+                self.cache.popitem(last=False)
+        return result
 
 
 def lru_cache(maxsize: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
@@ -323,4 +398,7 @@ def lru_cache(maxsize: int) -> Callable[[Callable[..., Any]], Callable[..., Any]
     >>> square(2), square(3), square(2)
     (4, 9, 4)
     """
-    raise NotImplementedError
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        return LRUCache(func, maxsize)
+
+    return decorator

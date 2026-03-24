@@ -23,9 +23,28 @@ Optional:
 """
 
 
+import sqlite3
+
+DB_PATH = "school.db"
+
+
 def main() -> None:
-    # TODO: run the steps from the docstring in sqlite_web.
-    print("Complete setup steps from this file docstring.")
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS students (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            age INTEGER NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            track TEXT NOT NULL
+        );
+    """)
+
+    conn.commit()
+    conn.close()
+    print(f"Database {DB_PATH} initialized and 'students' table created.")
 
 
 if __name__ == "__main__":

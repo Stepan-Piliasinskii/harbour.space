@@ -19,8 +19,31 @@ SENDER_NAME = "replace-with-your-name"
 
 
 def main() -> None:
-    # TODO: implement input loop and POST sending
-    pass
+    print(f"Messenger Client started as {SENDER_NAME}")
+    print("Type your message and press Enter (or 'exit' to quit):")
+
+    while True:
+        try:
+            text = input("> ")
+            if text.lower() in ("exit", "quit"):
+                break
+
+            if not text.strip():
+                continue
+
+            payload = {
+                "user": SENDER_NAME,
+                "text": text
+            }
+
+            response = requests.post(f"{TARGET_BASE_URL}/messages", json=payload)
+            response.raise_for_status()
+            print(f"Sent! Response: {response.json()}")
+
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print(f"Error: {e}")
 
 
 if __name__ == "__main__":

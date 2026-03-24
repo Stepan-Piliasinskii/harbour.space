@@ -12,12 +12,22 @@ Task:
 
 import requests
 
-URL = "https://example.com"
+URL = "http://example.com"
 
 
 def main() -> None:
-    # TODO: implement GET request and print HTML response
-    pass
+    response = requests.get(URL)
+    response.raise_for_status()
+
+    content_type = response.headers.get("Content-Type", "")
+    print(f"Status Code: {response.status_code}")
+    print(f"Content-Type Header: {content_type}")
+
+    if "text/html" in content_type:
+        print("\nVerified: Content-Type contains 'text/html'")
+
+    print("\nHTML Body (truncated):")
+    print(response.text[:500] + "...")
 
 
 if __name__ == "__main__":

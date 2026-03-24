@@ -18,10 +18,25 @@ URL = "https://jsonplaceholder.typicode.com/posts"
 
 
 def main() -> None:
-    # TODO: create payload dict
-    # TODO: send POST request with json=payload
-    # TODO: print response details
-    pass
+    payload = {
+        "title": "Sample Title",
+        "body": "Sample body text",
+        "userId": 101
+    }
+
+    response = requests.post(URL, json=payload)
+    response.raise_for_status()
+
+    print(f"Status Code: {response.status_code}")
+    print("\nRaw Body:")
+    print(response.text)
+
+    print("\nParsed JSON:")
+    data = response.json()
+    print(data)
+
+    if data.get("title") == payload["title"] and "id" in data:
+        print("\nResponse confirms post creation with generated ID.")
 
 
 if __name__ == "__main__":

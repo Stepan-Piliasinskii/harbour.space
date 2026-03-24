@@ -17,13 +17,25 @@ def main() -> None:
     cur = conn.cursor()
 
     # TODO: SELECT * FROM students
-    # rows = cur.fetchall()
+    print("All students:")
+    cur.execute("SELECT * FROM students")
+    rows = cur.fetchall()
+    for row in rows:
+        print(row)
 
     # TODO: SELECT name, email FROM students
-    # name_email_rows = cur.fetchall()
+    print("\nStudent names and emails:")
+    cur.execute("SELECT name, email FROM students")
+    name_email_rows = cur.fetchall()
+    for row in name_email_rows:
+        print(row)
 
     # TODO: SELECT one row for ana@example.com
-    # one_row = cur.fetchone()
+    print("\nOne student by email (ana@example.com):")
+    email = "ana@example.com"
+    cur.execute("SELECT * FROM students WHERE email = ?", (email,))
+    one_row = cur.fetchone()
+    print(one_row)
 
     conn.close()
 

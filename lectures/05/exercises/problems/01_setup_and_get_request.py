@@ -23,9 +23,23 @@ URL = "https://jsonplaceholder.typicode.com/todos/1"
 
 
 def main() -> None:
-    # TODO: implement request flow here.
-    # Suggested variables: response, data
-    pass
+    response = requests.get(URL)
+    response.raise_for_status()
+
+    print(f"Status Code: {response.status_code}")
+    print(f"Content-Type: {response.headers.get('Content-Type')}")
+
+    print("\nRaw Body:")
+    print(response.text)
+
+    print("\nParsed JSON:")
+    data = response.json()
+    print(data)
+
+    print("\nIndividual fields:")
+    print(f"ID: {data['id']}")
+    print(f"Title: {data['title']}")
+    print(f"Completed: {data['completed']}")
 
 
 if __name__ == "__main__":
