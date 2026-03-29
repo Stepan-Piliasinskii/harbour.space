@@ -2,9 +2,8 @@
 """Lecture 02 exercises (classes) - implement from scratch.
 Any 14 / 16 problems solved count as 100%
 """
+from __future__ import annotations
 import math
-
-import Point2D
 
 """
 1) Create class User with:
@@ -88,20 +87,28 @@ class QueueState:
         return self.items.pop(0)
 
 
-""" (Advanced, optional)
-6) Wallet + custom errors
-Create:
-- `class PaymentError(Exception): ...`
-- `class InsufficientFunds(PaymentError): ...`
-- `class Wallet` with:
-  - `__init__(self, balance: float = 0.0) -> None`
-  - `top_up(self, amount: float) -> None`
-  - `pay(self, amount: float) -> None`
-Rules:
-- Initial balance must be >= 0.
-- `top_up` and `pay` require amount > 0.
-- If `pay` exceeds balance, raise `InsufficientFunds`.
-"""
+class PaymentError(Exception):
+    pass
+
+class InsufficientFunds(PaymentError):
+    pass
+
+class Wallet:
+    def __init__(self, balance: float = 0.0) -> None:
+        if balance < 0:
+            raise ValueError("Initial balance must be non-negative")
+        self.balance = balance
+
+    def top_up(self, amount: float) -> None:
+        if amount > 0:
+            self.balance += amount
+
+    def pay(self, amount: float) -> None:
+        if amount <= 0:
+            return
+        if amount > self.balance:
+            raise InsufficientFunds("Not enough funds in wallet")
+        self.balance -= amount
 
 
 """
